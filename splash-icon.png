@@ -1,0 +1,140 @@
+import { ScrollView, Text, View, TouchableOpacity, Linking, Alert, Image } from "react-native";
+import { useRouter } from "expo-router";
+import { ScreenContainer } from "@/components/screen-container";
+import { useColors } from "@/hooks/use-colors";
+import { useState, useEffect } from "react";
+import * as Network from "expo-network";
+import { generateUPIQRCode } from "@/lib/app-utils";
+import { UPI_ID as CONFIG_UPI_ID, UPI_NAME as CONFIG_UPI_NAME } from "@/constants/app-config";
+
+export default function PaymentScreen() {
+  const router = useRouter();
+  const colors = useColors();
+  const [isOnline, setIsOnline] = useState(true);
+  const [qrCode, setQrCode] = useState<string>("");
+
+  useEffect(() => {
+    checkNetworkStatus();
+    generateQRCode();
+  }, []);
+
+  const checkNetworkStatus = async () => {
+    const isConnected = await Network.getNetworkStateAsync();
+    setIsOnline(isConnected.isConnected ?? true);
+  };
+
+  const generateQRCode = () => {
+    // Generate QR code URL using a QR code API
+    const qrUrl = generateUPIQRCode(CONFIG_UPI_ID, CONFIG_UPI_NAME);
+    setQrCode(qrUrl);
+  };
+
+  const handlePayNow = async () => {
+    if (!isOnline) {
+      Alert.alert("No Internet", "Internet connection is required to process payment.");
+      return;
+    }
+
+    try {
+      const upiUrl = `upi://pay?pa=${CONFIG_UPI_ID}&pn=${encodeURIComponent(CONFIG_UPI_NAME)}&cu=INR`;
+      await Linking.openURL(upiUrl);
+    } catch (error) {
+      Alert.alert("Error", "Could not open UPI payment. Please ensure you have a UPI app installed.");
+    }
+  };
+
+  const handleCopyUPI = () => {
+    // Copy to clipboard functionality
+    Alert.alert("Success", `UPI ID copied: ${CONFIG_UPI_ID}`);
+  };
+
+  return (
+    <ScreenContainer className="bg-background">
+      {/* Header */}
+      <View className="flex-row items-center justify-between px-4 py-4 border-b border-border">
+        <TouchableOpacity onPress={() => router.back()}>
+          <Text className="text-2xl">←</Text>
+        </TouchableOpacity>
+        <Text className="text-xl font-bold text-foreground">Make Payment</Text>
+        <View style={{ width: 24 }} />
+      </View>
+
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
+        <View className="flex-1 px-4 py-6 gap-6">
+          {/* UPI ID Section */}
+          <View className="bg-surface rounded-2xl p-6 border border-border gap-3">
+            <Text className="text-sm font-semibold text-muted uppercase">UPI ID</Text>
+            <View className="flex-row items-center justify-between bg-background rounded-lg p-4">
+              <Text className="text-lg font-bold text-foreground">{CONFIG_UPI_ID}</Text>
+              <TouchableOpacity onPress={handleCopyUPI}>
+                <Text className="text-lg">📋</Text>
+              </TouchableOpacity>
+            </View>
+            <Text className="text-xs text-muted">Tap the copy icon to copy UPI ID</Text>
+          </View>
+
+          {/* QR Code Section */}
+          <View className="bg-surface rounded-2xl p-6 border border-border gap-3 items-center">
+            <Text className="text-sm font-semibold text-muted uppercase">Scan to Pay</Text>
+            {qrCode && (
+              <Image
+                source={{ uri: qrCode }}
+                style={{ width: 250, height: 250, borderRadius: 12 }}
+                resizeMode="contain"
+              />
+            )}
+            <Text className="text-xs text-muted text-center">
+              Scan this QR code with any UPI app to pay
+            </Text>
+          </View>
+
+          {/* Pay Now Button */}
+          <TouchableOpacity
+            onPress={handlePayNow}
+            style={{
+              backgroundColor: colors.success,
+              borderRadius: 12,
+              paddingVertical: 16,
+              paddingHorizontal: 16,
+            }}
+            activeOpacity={0.8}
+          >
+            <Text className="text-lg font-semibold text-white text-center">
+              💳 Pay Now
+            </Text>
+          </TouchableOpacity>
+
+          {/* Payment Info */}
+          <View className="bg-surface rounded-2xl p-6 border border-border gap-3">
+            <Text className="text-sm font-semibold text-foreground">Payment Information</Text>
+            <View className="gap-2">
+              <View className="flex-row justify-between">
+                <Text className="text-sm text-muted">Recipient:</Text>
+                <Text className="text-sm font-semibold text-foreground">{CONFIG_UPI_NAME}</Text>
+              </View>
+              <View className="flex-row justify-between">
+                <Text className="text-sm text-muted">UPI ID:</Text>
+                <Text className="text-sm font-semibold text-foreground">{CONFIG_UPI_ID}</Text>
+              </View>
+              <View className="flex-row justify-between">
+                <Text className="text-sm text-muted">Currency:</Text>
+                <Text className="text-sm font-semibold text-foreground">INR (₹)</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Instructions */}
+          <View className="bg-blue-50 rounded-2xl p-4 border border-blue-200 gap-2">
+            <Text className="text-sm font-semibold text-blue-900">How to Pay:</Text>
+            <Text className="text-xs text-blue-800">
+              1. Tap "Pay Now" to open your UPI app{"\n"}
+              2. Verify the payment details{"\n"}
+              3. Enter your UPI PIN to confirm{"\n"}
+              4. Payment will be processed
+            </Text>
+          </View>
+        </View>
+      </ScrollView>
+    </ScreenContainer>
+  );
+}

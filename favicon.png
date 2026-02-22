@@ -1,0 +1,223 @@
+import { ScrollView, Text, View, TouchableOpacity, Image, Linking, Alert } from "react-native";
+import { useRouter } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
+import { ScreenContainer } from "@/components/screen-container";
+import { useColors } from "@/hooks/use-colors";
+import { useEffect, useState } from "react";
+import * as Network from "expo-network";
+import {
+  OWNER_NAME,
+  OWNER_LOCATION,
+  OWNER_LANDMARK,
+  WHATSAPP_LINK,
+  WEBSITE_URL,
+  LOCATION_URL,
+  APP_TAGLINE,
+} from "@/constants/app-config";
+
+export default function HomeScreen() {
+  const router = useRouter();
+  const colors = useColors();
+  const [isOnline, setIsOnline] = useState(true);
+
+  useEffect(() => {
+    checkNetworkStatus();
+  }, []);
+
+  const checkNetworkStatus = async () => {
+    const isConnected = await Network.getNetworkStateAsync();
+    setIsOnline(isConnected.isConnected ?? true);
+  };
+
+  const handleNavigation = (screen: string) => {
+    if (!isOnline) {
+      Alert.alert("No Internet", "Internet connection is required for this feature.");
+      return;
+    }
+    router.push(screen as any);
+  };
+
+  const handleWhatsApp = async () => {
+    if (!isOnline) {
+      Alert.alert("No Internet", "Internet connection is required to open WhatsApp.");
+      return;
+    }
+    try {
+      await Linking.openURL(WHATSAPP_LINK);
+    } catch (error) {
+      Alert.alert("Error", "Could not open WhatsApp. Please install WhatsApp first.");
+    }
+  };
+
+  const handleWebsite = async () => {
+    if (!isOnline) {
+      Alert.alert("No Internet", "Internet connection is required to visit the website.");
+      return;
+    }
+    try {
+      await WebBrowser.openBrowserAsync(WEBSITE_URL);
+    } catch (error) {
+      Alert.alert("Error", "Could not open website.");
+    }
+  };
+
+  const handleLocation = async () => {
+    if (!isOnline) {
+      Alert.alert("No Internet", "Internet connection is required to view location.");
+      return;
+    }
+    try {
+      await Linking.openURL(LOCATION_URL);
+    } catch (error) {
+      Alert.alert("Error", "Could not open maps.");
+    }
+  };
+
+  return (
+    <ScreenContainer className="bg-background">
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
+        <View className="flex-1 px-4 py-6 gap-6">
+          {/* Header Section with Logo */}
+          <View className="items-center gap-4 pt-4">
+            <View className="w-20 h-20 rounded-2xl overflow-hidden bg-surface border-2" style={{ borderColor: colors.primary }}>
+              <Image
+                source={require("@/assets/images/icon.png")}
+                style={{ width: "100%", height: "100%" }}
+                resizeMode="contain"
+              />
+            </View>
+
+            <View className="items-center gap-1">
+              <Text className="text-3xl font-bold text-foreground text-center">
+                Dhruv E-Mitra
+              </Text>
+              <Text className="text-2xl font-bold text-foreground text-center">
+                Seva Kendra
+              </Text>
+            </View>
+
+            <Text className="text-sm font-semibold text-primary">
+              {APP_TAGLINE}
+            </Text>
+          </View>
+
+          {/* Main Action Buttons */}
+          <View className="gap-3">
+            {/* Apply for Services Button */}
+            <TouchableOpacity
+              onPress={() => handleNavigation("services")}
+              style={{
+                backgroundColor: colors.primary,
+                borderRadius: 12,
+                paddingVertical: 16,
+                paddingHorizontal: 16,
+              }}
+              activeOpacity={0.8}
+            >
+              <View className="flex-row items-center justify-between">
+                <Text className="text-lg font-semibold text-white">Apply for Services</Text>
+                <Text className="text-xl">→</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* Check Status Button */}
+            <TouchableOpacity
+              onPress={() => handleNavigation("status")}
+              style={{
+                backgroundColor: "#00AA88",
+                borderRadius: 12,
+                paddingVertical: 16,
+                paddingHorizontal: 16,
+              }}
+              activeOpacity={0.8}
+            >
+              <View className="flex-row items-center justify-between">
+                <Text className="text-lg font-semibold text-white">Check Status</Text>
+                <Text className="text-xl">→</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* Make Payment Button */}
+            <TouchableOpacity
+              onPress={() => handleNavigation("payment")}
+              style={{
+                backgroundColor: colors.success,
+                borderRadius: 12,
+                paddingVertical: 16,
+                paddingHorizontal: 16,
+              }}
+              activeOpacity={0.8}
+            >
+              <View className="flex-row items-center justify-between">
+                <Text className="text-lg font-semibold text-white">Make Payment</Text>
+                <Text className="text-xl">→</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* WhatsApp Support Button */}
+            <TouchableOpacity
+              onPress={handleWhatsApp}
+              style={{
+                backgroundColor: "#25D366",
+                borderRadius: 12,
+                paddingVertical: 16,
+                paddingHorizontal: 16,
+              }}
+              activeOpacity={0.8}
+            >
+              <View className="flex-row items-center justify-between">
+                <Text className="text-lg font-semibold text-white">WhatsApp Support</Text>
+                <Text className="text-xl">→</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* Visit Website Button */}
+            <TouchableOpacity
+              onPress={handleWebsite}
+              style={{
+                backgroundColor: colors.primary,
+                borderRadius: 12,
+                paddingVertical: 16,
+                paddingHorizontal: 16,
+              }}
+              activeOpacity={0.8}
+            >
+              <View className="flex-row items-center justify-between">
+                <Text className="text-lg font-semibold text-white">Visit Website</Text>
+                <Text className="text-xl">→</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* Location Button */}
+            <TouchableOpacity
+              onPress={handleLocation}
+              style={{
+                backgroundColor: "#3B82F6",
+                borderRadius: 12,
+                paddingVertical: 16,
+                paddingHorizontal: 16,
+              }}
+              activeOpacity={0.8}
+            >
+              <View className="flex-row items-center justify-between">
+                <Text className="text-lg font-semibold text-white">📍 Location</Text>
+                <Text className="text-xl">→</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+
+          {/* Footer Section */}
+          <View className="items-center gap-2 pt-6 pb-4 border-t border-border">
+            <Text className="text-sm font-semibold text-foreground">{OWNER_NAME}</Text>
+            <Text className="text-xs text-muted text-center">
+              {OWNER_LOCATION}
+            </Text>
+            <Text className="text-xs text-muted text-center">
+              {OWNER_LANDMARK}
+            </Text>
+          </View>
+        </View>
+      </ScrollView>
+    </ScreenContainer>
+  );
+}
